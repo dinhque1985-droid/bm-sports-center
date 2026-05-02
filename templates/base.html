@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Sports Center{% endblock %}</title>
+
+    <!-- 🔥 GLOBAL CSS -->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6fa;
+        }
+    </style>
+
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="shortcut icon" href="/static/favicon.png">
+    <!-- 🔥 PAGE CSS -->
+    {% block extra_css %}{% endblock %}
+
+</head>
+
+<body data-role="{{ user_role|default:'guest' }}">
+    
+    <!-- ===== HEADER ===== -->
+    <header>
+        {% block header %}
+        <h2 style="margin: 0; padding: 16px;">🏟️ BM_Sports Center</h2>
+        {% endblock %}
+    </header>
+
+    <!-- ===== TOOLBAR ===== -->
+    <section>
+        {% block toolbar %}{% endblock %}
+    </section>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 🔥 MAIN JS ENTRY (QUAN TRỌNG) -->
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

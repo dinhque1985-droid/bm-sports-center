@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+BM_Sport News
+{% endblock %}
+
+<!-- =====================================
+     EXTRA CSS
+===================================== -->
+{% block extra_css %}
+<link rel="stylesheet" href="/static/booking/css/news.css">
+{% endblock %}
+
+
+<!-- =====================================
+     HEADER
+===================================== -->
+{% block header %}
+<header class="news-header">
+    <h2>
+        📢 BM_Sport News Center
+    </h2>
+
+    <div class="news-header-actions">
+
+        <a
+            href="/"
+            class="news-back-btn"
+        >
+            ← Về lịch sân
+        </a>
+
+        {% if user_role == "admin" or user_role == "staff" %}
+        <button
+            id="open-news-create"
+            class="news-create-btn"
+        >
+            + Đăng bản tin
+        </button>
+        {% endif %}
+
+    </div>
+</header>
+{% endblock %}
+
+
+<!-- =====================================
+     TOOLBAR
+===================================== -->
+{% block toolbar %}
+<section class="news-toolbar">
+
+    <input
+        type="text"
+        id="news-search"
+        placeholder="Tìm tiêu đề bản tin..."
+    >
+
+    <select id="news-filter">
+        <option value="all">
+            Tất cả
+        </option>
+
+        <option value="pinned">
+            📌 Ghim
+        </option>
+
+        <option value="active">
+            Đang hiển thị
+        </option>
+
+        {% if user_role == "admin" or user_role == "staff" %}
+        <option value="hidden">
+            Đã ẩn
+        </option>
+        {% endif %}
+    </select>
+
+</section>
+{% endblock %}
+
+
+<!-- =====================================
+     MAIN CONTENT
+===================================== -->
+{% block content %}
+<!-- <h1> TRUNG TÂM THỂ THAO BM-SPORT 
+Địa chỉ: 56 Đào Duy Anh, phường Thành Nhất, tỉnh Đắk Lắk 
+Số điện thoại: 0985.164164 hoặc 0946071985  </h1> -->
+<main class="news-page">
+
+    <!-- =============================
+         PINNED SECTION
+    ============================== -->
+    <section
+        id="pinned-news-section"
+        class="news-section"
+    >
+        <h3>
+            📌 Bản tin nổi bật
+        </h3>
+
+        <div
+            id="pinned-news-list"
+            class="news-grid"
+        >
+            <!-- JS render -->
+        </div>
+    </section>
+
+
+    <!-- =============================
+         LATEST SECTION
+    ============================== -->
+    <section
+        class="news-section"
+    >
+        <h3>
+            📰 Tất cả bản tin
+        </h3>
+
+        <div
+            id="news-list"
+            class="news-feed"
+        >
+            <!-- JS render -->
+        </div>
+    </section>
+
+</main>
+
+
+<!-- =====================================
+     CREATE / EDIT MODAL
+===================================== -->
+{% if user_role == "admin" or user_role == "staff" %}
+<div
+    id="news-modal"
+    class="guest-booking-modal"
+    hidden
+>
+
+    <!-- BACKDROP -->
+    <div
+        id="news-modal-backdrop"
+        class="gbm-backdrop"
+    ></div>
+
+    <!-- CARD -->
+    <div class="gbm-card">
+
+        <!-- HEADER -->
+        <div class="gbm-header">
+
+            <h2>
+                📝 Đăng bản tin
+            </h2>
+
+            <button
+                id="news-close"
+                type="button"
+                class="gbm-close"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <!-- BODY -->
+        <div class="gbm-body">
+
+            <!-- TITLE -->
+            <div class="gbm-row">
+                <label for="news-title">
+                    Tiêu đề
+                </label>
+
+                <input
+                    type="text"
+                    id="news-title"
+                    maxlength="200"
+                >
+            </div>
+
+            <!-- CONTENT -->
+            <div class="gbm-row">
+                <label for="news-content">
+                    Nội dung
+                </label>
+
+                <textarea
+                    id="news-content"
+                    rows="6"
+                ></textarea>
+            </div>
+
+            <!-- IMAGE -->
+            <div class="gbm-row">
+                <label for="news-image">
+                    Hình ảnh
+                </label>
+
+                <input
+                    type="file"
+                    id="news-image"
+                    accept="image/*"
+                >
+            </div>
+
+            <!-- OPTIONS -->
+            <div class="gbm-grid">
+
+                <div class="gbm-row">
+                    <label>
+                        <input
+                            type="checkbox"
+                            id="news-active"
+                            checked
+                        >
+                        Hiển thị
+                    </label>
+                </div>
+
+                {% if user_role == "admin" %}
+                <div class="gbm-row">
+                    <label>
+                        <input
+                            type="checkbox"
+                            id="news-pinned"
+                        >
+                        Ghim bản tin
+                    </label>
+                </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="gbm-actions">
+
+            <button
+                id="news-submit"
+                type="button"
+                class="gbm-submit"
+            >
+                Đăng bản tin
+            </button>
+
+            <button
+                id="news-cancel"
+                type="button"
+                class="gbm-cancel"
+            >
+                Hủy
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+<!-- =====================================
+     EXTRA JS
+===================================== -->
+{% block extra_js %}
+<script>
+    window.USER_ROLE = "{{ user_role }}";
+</script>
+
+<script
+    type="module"
+    src="{% static 'booking/js/news/newsFeed.js' %}"
+></script>
+{% endblock %}

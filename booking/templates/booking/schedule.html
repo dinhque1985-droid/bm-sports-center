@@ -1,0 +1,553 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lịch sân{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'booking/css/schedule.css' %}">
+{% endblock %}
+
+{% block header %}
+<header class="schedule-header">
+
+    <div class="brand-main">
+        <h1 class="brand-title">
+            🏟️ BM_Sports Center
+        </h1>
+    </div>
+
+    <div class="brand-subinfo">
+
+        <span>
+            📍 56 Đào Duy Anh, phường Thành Nhất, tỉnh Đắk Lắk 
+        </span>
+
+        <span>
+            ☎️ 0985.164164 hoặc 0946071985 
+        </span>
+
+        <span>
+            🕒 05:00 - 23:00
+        </span>
+
+    </div>
+
+</header>
+{% endblock %}
+
+{# =========================================================
+   TOOLBAR
+   FIX:
+   - Không include component chưa tồn tại
+   - Giữ trực tiếp từ bản gốc để hệ thống chạy ngay
+   ========================================================= #}
+{% block toolbar %}
+<div class="schedule-toolbar">
+
+    <!-- ===== DATE NAV ===== -->
+    <button
+        id="prev-day"
+        type="button"
+        aria-label="Ngày trước"
+    >
+        ⬅
+    </button>
+
+    <button
+        id="today-btn"
+        type="button"
+    >
+        Today
+    </button>
+
+    <button
+        id="next-day"
+        type="button"
+        aria-label="Ngày sau"
+    >
+        ➡
+    </button>
+
+    <!-- ===== CURRENT DATE ===== -->
+    <span id="current-date-label">
+        LỊCH NGÀY: --
+    </span>
+
+    <!-- ===== DATE PICKER ===== -->
+    <input
+        type="date"
+        id="date-picker"
+    >
+
+    <!-- ===== ADMIN / STAFF ACTIONS ===== -->
+    {% if user_role == "staff" or user_role == "admin" %}
+    <button
+        id="open-block-form"
+        type="button"
+        data-role-required="staff"
+    >
+        🔒 Khóa sân
+    </button>
+    {% endif %}
+
+    <!-- ===== NEWS FEED ===== -->
+    <a
+        href="/news/"
+        id="open-news-feed"
+        class="toolbar-link-btn"
+        role="button"
+        aria-label="Mở bản tin"
+    >
+        📢 Bản tin
+    </a>
+
+</div>
+{% endblock %}
+
+
+{% block content %}
+
+<!-- ======================================
+     BLOCK COURT MODAL
+====================================== -->
+{% if user_role == "staff" or user_role == "admin" %}
+<div
+    id="block-booking-modal"
+    class="guest-booking-modal"
+    hidden
+>
+
+    <div
+        id="bbm-backdrop"
+        class="gbm-backdrop"
+    ></div>
+
+    <div
+        class="gbm-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bbm-title"
+    >
+
+        <div class="gbm-header">
+
+            <h2 id="bbm-title">
+                🔒 Khóa sân / Thuê tháng
+            </h2>
+
+            <button
+                id="bf-close"
+                type="button"
+                class="gbm-close"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <div class="gbm-body">
+
+            <div class="gbm-row">
+                <label for="bf-court">Sân</label>
+
+                <select id="bf-court">
+                    <option value="1">Cầu lông 1</option>
+                    <option value="2">Cầu lông 2</option>
+                    <option value="3">Cầu lông 3</option>
+                    <option value="4">Cầu lông 4</option>
+                    <option value="5">Pickleball 1</option>
+                    <option value="6">Pickleball 2</option>
+                </select>
+            </div>
+
+            <div class="gbm-grid">
+
+                <div class="gbm-row">
+                    <label for="bf-date-from">Từ ngày</label>
+                    <input type="date" id="bf-date-from">
+                </div>
+
+                <div class="gbm-row">
+                    <label for="bf-date-to">Đến ngày</label>
+                    <input type="date" id="bf-date-to">
+                </div>
+
+            </div>
+
+            <div class="gbm-grid">
+
+                <div class="gbm-row">
+                    <label for="bf-start">Bắt đầu</label>
+                    <input type="time" id="bf-start">
+                </div>
+
+                <div class="gbm-row">
+                    <label for="bf-end">Kết thúc</label>
+                    <input type="time" id="bf-end">
+                </div>
+
+            </div>
+
+            <div class="gbm-row">
+                <label for="bf-type">Loại khóa</label>
+
+                <select id="bf-type">
+                    <option value="monthly">Thuê tháng</option>
+                    <option value="block">Khóa sân</option>
+                </select>
+            </div>
+
+            <div class="gbm-row">
+                <label for="bf-reason">Lý do</label>
+
+                <textarea
+                    id="bf-reason"
+                    rows="3"
+                    placeholder="Ví dụ: thuê tháng, bảo trì, giải đấu..."
+                ></textarea>
+            </div>
+
+        </div>
+
+        <div class="gbm-actions">
+
+            <button
+                id="bf-save"
+                type="button"
+                class="gbm-submit"
+            >
+                Lưu khóa sân
+            </button>
+
+            <button
+                id="bf-cancel"
+                type="button"
+                class="gbm-cancel"
+            >
+                Hủy
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+{% endif %}
+
+
+
+<!-- ================= TIMELINE ================= -->
+<section class="timeline-container">
+
+    <div class="timeline-inner">
+
+        <div id="hover-time-display"></div>
+
+        <div class="timeline-row header-row">
+            <div class="court-name"></div>
+            <div id="timeline-header" class="timeline"></div>
+        </div>
+
+        <div class="courts">
+
+            {% for i in "1234" %}
+            <div class="court-row"
+                 data-row-type="court"
+                 data-court-id="{{ i }}"
+                 data-type="badminton">
+
+                <div class="court-name">Cầu lông {{ i }}</div>
+
+                <div class="timeline">
+                    <div class="booking-layer"></div>
+                    <div class="block-layer"></div>
+                </div>
+
+            </div>
+            {% endfor %}
+
+            {% for i in "12" %}
+            <div class="court-row"
+                 data-row-type="court"
+                 data-court-id="{{ forloop.counter|add:4 }}"
+                 data-type="pickleball">
+
+                <div class="court-name">Pickleball {{ i }}</div>
+
+                <div class="timeline">
+                    <div class="booking-layer"></div>
+                    <div class="block-layer"></div>
+                </div>
+
+            </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= BOOKING LIST ================= -->
+<section class="list-section booking-list">
+
+    <div class="booking-filter">
+        <input
+            type="text"
+            id="search-name"
+            placeholder="Tìm khách..."
+        >
+
+        <select id="filter-status"></select>
+    </div>
+
+    <h3>📋 DANH SÁCH ĐẶT SÂN LẺ</h3>
+
+    <div class="table-wrap booking-table-wrapper">
+
+        <table class="booking-table">
+
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Sân</th>
+                    <th>Khách</th>
+                    <th>SĐT</th>
+                    <th>Người đặt</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Giá</th>
+                    <th>Trạng thái</th>
+                    <th>Thanh toán</th>
+                </tr>
+            </thead>
+
+            <tbody id="booking-table"></tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================= BLOCK LIST ================= -->
+{% if user_role == "staff" or user_role == "admin" %}
+<section class="list-section block-list">
+
+    <h3>📅 DANH SÁCH SÂN THÁNG</h3>
+
+    <div class="table-wrap booking-table-wrapper">
+
+        <table class="booking-table">
+
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Sân</th>
+                    <th>Từ ngày</th>
+                    <th>Đến ngày</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Loại giá</th>
+                    <th>Giá</th>
+                    <th>Lý do</th>
+                </tr>
+            </thead>
+
+            <tbody id="block-table"></tbody>
+
+        </table>
+
+    </div>
+
+</section>
+{% endif %}
+
+<!-- ================= BOOKING REQUEST LIST ================= -->
+<section class="list-section booking-request-list">
+
+    <!-- HEADER -->
+    <div class="request-header">
+
+        {% if user_role == "staff" or user_role == "admin" %}
+        <h3 data-role-required="staff">
+            📩 YÊU CẦU CHỜ DUYỆT
+        </h3>
+        {% else %}
+        <h3>
+            📩 YÊU CẦU CHỜ DUYỆT
+        </h3>
+        {% endif %}
+
+        <div class="request-toolbar">
+
+            {% if user_role == "staff" or user_role == "admin" %}
+            <div
+                class="request-filter-wrap"
+                data-role-required="staff"
+            >
+                <select id="request-status-filter">
+                    <option value="pending">Chờ duyệt</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="rejected">Từ chối</option>
+                    <option value="all">Tất cả</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <button
+                id="open-guest-booking"
+                type="button"
+            >
+                📅 Đặt sân
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- GUEST BOOKING MODAL -->
+    <div id="guest-booking-modal" class="guest-booking-modal" hidden>
+
+        <div id="gbm-backdrop" class="gbm-backdrop"></div>
+
+        <div class="gbm-card">
+
+            <div class="gbm-header">
+                <h2>Đặt sân khách</h2>
+
+                <button
+                    type="button"
+                    id="gbf-close"
+                    class="gbm-close"
+                >✕</button>
+            </div>
+
+            <form id="guest-booking-form" class="gbm-body">
+
+                <div class="gbm-row">
+                    <label>Sân</label>
+                    <select id="gbf-court" required></select>
+                </div>
+
+                <div class="gbm-row">
+                    <label>Ngày</label>
+                    <input type="date" id="gbf-date" required>
+                </div>
+
+                <div class="gbm-grid">
+                    <div class="gbm-row">
+                        <label>Bắt đầu</label>
+                        <input type="time" id="gbf-start" required>
+                    </div>
+
+                    <div class="gbm-row">
+                        <label>Kết thúc</label>
+                        <input type="time" id="gbf-end" required>
+                    </div>
+                </div>
+
+                <div class="gbm-row">
+                    <label>Khách hàng</label>
+                    <input type="text" id="gbf-customer" required>
+                </div>
+
+                <div class="gbm-row">
+                    <label>SĐT</label>
+                    <input type="text" id="gbf-phone" required>
+                </div>
+
+                <div class="gbm-row">
+                    <label>Ghi chú</label>
+                    <textarea id="gbf-note"></textarea>
+                </div>
+
+                <div class="gbm-actions">
+                    <button
+                        type="submit"
+                        id="gbf-submit"
+                        class="gbm-submit"
+                    >
+                        Gửi yêu cầu
+                    </button>
+
+                    <button
+                        type="button"
+                        id="gbf-cancel"
+                        class="gbm-cancel"
+                    >
+                        Hủy
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+    <!-- STAFF / ADMIN REQUEST TABLE -->
+    {% if user_role == "staff" or user_role == "admin" %}
+    <div
+        class="table-wrap booking-table-wrapper"
+        data-role-required="staff"
+    >
+
+        <table
+            class="booking-table request-table"
+        >
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Sân</th>
+                    <th>Ngày</th>
+                    <th>Giờ</th>
+                    <th>Khách</th>
+                    <th>SĐT</th>
+                    <th>Giá dự kiến</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody
+                id="booking-request-table"
+            ></tbody>
+
+        </table>
+
+    </div>
+    {% endif %}
+
+</section>
+
+<div
+    id="context-menu"
+    hidden
+></div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+    window.SCHEDULE_CONFIG = {
+        apiBase: "/api/",
+        currentRole: "{{ user_role|default:'guest' }}",
+        csrfToken: "{{ csrf_token }}",
+        canBlockCourt: "{{ user_role }}" === "staff" || "{{ user_role }}" === "admin",
+        canApproveRequest: "{{ user_role }}" === "staff" || "{{ user_role }}" === "admin",
+        isAdmin: "{{ user_role }}" === "admin"
+    };
+
+    if (window.APP_CONFIG && window.APP_CONFIG.debug) {
+        console.log("SCHEDULE CONFIG:", window.SCHEDULE_CONFIG);
+    }
+</script><script type="module" src="{% static 'booking/js/main.js' %}"></script>
+{% endblock %}
